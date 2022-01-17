@@ -2,6 +2,7 @@ package com.example.flow
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -15,7 +16,8 @@ import kotlinx.coroutines.launch
 class MainActivity :
     AppCompatActivity(),
     MainActivityAdapter.ItemCallBack,
-    MainActivityMarkAdapter.MarkItemCallBack {
+    MainActivityMarkAdapter.MarkItemCallBack,
+    MainActivity2Adapter.ItemSelectedCallBack {
 
     private val model by viewModels<MainActivityViewModel>()
     lateinit var binding: ActivityMainBinding
@@ -33,19 +35,33 @@ class MainActivity :
         lifecycleScope.launch {
             model.friendList.collect {
                 Log.d(TAG, "collected FriendList - ${model.friendList.value} called")
-                adapter.submitList(it)
+
+                if (model.selectedFriendList.value.isNotEmpty()) {
+                    adapter.submitList(it)
+                } else {
+
+                    adapter.submitList(it)
+                }
             }
         }
         lifecycleScope.launch {
             model.markFriendList.collect {
-                Log.d(TAG, "markAdapter - ${markAdapter.currentList.toList()}")
-                Log.d(TAG, "it - ${it.toList()}")
+
+                Log.d(TAG, "MainActivity - onCreate() called")
+
                 markAdapter.submitList(it)
             }
         }
+
         lifecycleScope.launch {
             model.selectedFriendList.collect {
+                if (it.isNotEmpty()) {
+                    binding.rvView2.visibility = View.VISIBLE
+                } else {
+                    binding.rvView2.visibility = View.GONE
+                }
                 Log.d(TAG, "MainActivity - selectedFriendList collected")
+
                 adapter2.submitList(it)
             }
         }
@@ -63,7 +79,13 @@ class MainActivity :
         markAdapter = MainActivityMarkAdapter(this)
         binding.rvMark.adapter = markAdapter
     }
-    override fun onItemClicked(friend: Friend, position: Int) {
-        model.addFriendList(friend)
+    override fun onItemClicked(friend: Friend, position: Int, adapter: MainActivityAdapter) {
+        model.addFriendList(friend, position, adapter)
+    }
+    override fun onItemSelectedClicked(friend: Friend) {
+        model.removeSelectList(friend)
+    }
+    override fun onMarkItemClicked(friend: Friend, position: Int, adapter: MainActivityMarkAdapter) {
+        model.addMarkList(friend, position, adapter)
     }
 }

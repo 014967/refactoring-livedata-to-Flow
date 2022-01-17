@@ -13,12 +13,16 @@ import javax.inject.Inject
  */
 class MainActivityViewModel @Inject constructor() : ViewModel() {
     val TAG: String = "로그"
-    private var _friendList = MutableStateFlow<List<Friend>> (emptyList())
+    private var _friendList = MutableStateFlow<List<Friend>>(emptyList())
     private var _markFriendList = MutableStateFlow<List<Friend>>(emptyList())
-    private var _selectedFriendList = MutableStateFlow<List<Friend>> (emptyList())
+    private var _selectedFriendList = MutableStateFlow<List<Friend>>(emptyList())
 
-    private var selectedMap = HashMap<String, Int>(0)
-    private var selectedList: MutableList<Friend> = arrayListOf()
+    private var friendAdapter: MainActivityAdapter? = null
+    private var markAdapter: MainActivityMarkAdapter? = null
+
+    data class SelectedTable(var id: String, var position: Int, var adapterFlag: Int)
+    private var selectedMap = HashMap<String, SelectedTable>()
+    // private var selectedList: MutableList<Friend> = arrayListOf()
 
     var friendList = _friendList.asStateFlow()
         get() = _friendList
@@ -41,6 +45,7 @@ class MainActivityViewModel @Inject constructor() : ViewModel() {
             }
         }
     }
+
     fun initFriendList(): Flow<List<Friend>> = flow {
         var List: MutableList<Friend> = arrayListOf()
 
@@ -48,7 +53,7 @@ class MainActivityViewModel @Inject constructor() : ViewModel() {
         for (i in 0 until 20) {
             if (i < 2) {
             } else {
-                friend = Friend(i, "$i", "더미$i", 0, 0)
+                friend = Friend("$i", "$i", "더미$i", 0)
                 List.add(friend)
             }
 
@@ -61,57 +66,77 @@ class MainActivityViewModel @Inject constructor() : ViewModel() {
         var friend: Friend
 
         for (i in 0 until 2) {
-            friend = Friend(i, "$i", "더미$i", 1, 0)
+            friend = Friend("$i", "$i", "더미$i", 1)
             markList.add(friend)
         }
         emit(markList)
     }
 
-    fun addFriendList(friend: Friend) {
+    fun addFriendList(friend: Friend, position: Int, adapter: MainActivityAdapter) {
         var list: List<Friend>
-        Log.d(TAG, "friend - $friend called")
-        Log.d(TAG, "selectList before add ${selectedList.toList()}")
-        if (selectedList.indexOf(friend) == -1) {
+        if (!selectedMap.containsKey(friend.id)) {
 
-            if (_friendList.value.indexOf(friend) == -1) {
-
-                // list = _markFriendList.value.map { it.copy() }
-                list = _markFriendList.value.map {
-                    if (it.equals(friend)) {
-                        it.copy(selected = 1)
-                    } else {
-                        it.copy()
-                    }
-                }
-
-                // list[_markFriendList.value.indexOf(friend)].selected = 1
-                _markFriendList.value = ArrayList(list)
-            } else {
-                list = _friendList.value.map { it.copy() }
-                list[_friendList.value.indexOf(friend)].selected = 1
-                _friendList.value = list.toMutableList()
+            var selectedTable = SelectedTable(friend.id, position, 0)
+            selectedMap.put(friend.id, selectedTable)
+            // Log.d(TAG,"selectedMap - $selectedMap called")
+            adapter.putActivate(position)
+            list = _selectedFriendList.value.map { it.copy() }
+            var newList = list.toMutableList()
+            newList.add(friend)
+            this.friendAdapter = adapter
+            _selectedFriendList.value = newList
+        } else {
+            var newList: MutableList<Friend> = _selectedFriendList.value.toMutableList()
+            newList.removeIf {
+                it.id == friend.id
             }
-            friend.selected = 1
-            selectedList.add(friend)
-            _selectedFriendList.value = selectedList.toMutableList()
+            selectedMap.remove(friend.id)
+            Log.d(TAG, "$adapter")
+            this.friendAdapter = adapter
+            adapter.removeActivate(position)
+            _selectedFriendList.value = newList
+        }
+    }
+
+    fun addMarkList(friend: Friend, position: Int, adapter: MainActivityMarkAdapter) {
+        var list: List<Friend>
+        if (!selectedMap.containsKey(friend.id)) {
+
+            var selectedTable = SelectedTable(friend.id, position, 1)
+            selectedMap.put(friend.id, selectedTable)
+            adapter.putActivate(position)
+            list = _selectedFriendList.value.map { it.copy() }
+            var newList = list.toMutableList()
+            newList.add(friend)
+            this.markAdapter = adapter
+            _selectedFriendList.value = newList
         } else {
 
-            if (_friendList.value.indexOf(friend) == -1) {
-
-                list = _markFriendList.value.map { it.copy() }
-                list[_markFriendList.value.indexOf(friend)].selected = 0
-                _markFriendList.value = list.toMutableList()
-            } else {
-
-                list = _friendList.value.map { it.copy() }
-                list[_friendList.value.indexOf(friend)].selected = 0
-                _friendList.value = list.toMutableList()
+            var newList: MutableList<Friend> = _selectedFriendList.value.toMutableList()
+            newList.removeIf {
+                it.id == friend.id
             }
+            selectedMap.remove(friend.id)
+            Log.d(TAG, "$adapter")
+            this.markAdapter = adapter
+            adapter.removeActivate(position)
+            _selectedFriendList.value = newList
+        }
+    }
 
-            list = _selectedFriendList.value.map { it.copy() }.toMutableList()
-            list.remove(friend)
-            selectedList.remove(friend)
-            _selectedFriendList.value = list
+    fun removeSelectList(friend: Friend) {
+        var newTable: SelectedTable = selectedMap.get(friend.id)!!
+        var newPosition = newTable.position
+        var newList: MutableList<Friend> = _selectedFriendList.value.toMutableList()
+        newList.removeIf {
+            it.id == friend.id
+        }
+        selectedMap.remove(friend.id)
+        _selectedFriendList.value = newList
+        if (newTable.adapterFlag == 0) {
+            this.friendAdapter?.removeActivate(newPosition)
+        } else {
+            this.markAdapter?.removeActivate(newPosition)
         }
     }
 }

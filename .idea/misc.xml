@@ -4,9 +4,11 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable-v24/ic_radio_button.xml" value="0.125" />
+        <entry key="app/src/main/res/drawable/ic_radio_button_selector.xml" value="0.2212962962962963" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.2056159420289855" />
         <entry key="app/src/main/res/layout/item_view.xml" value="0.33" />
         <entry key="app/src/main/res/layout/item_view2.xml" value="0.29347826086956524" />
+        <entry key="app/src/main/res/layout/item_view3.xml" value="0.20462962962962963" />
       </map>
     </option>
   </component>

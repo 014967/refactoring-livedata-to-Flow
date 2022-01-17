@@ -18,7 +18,7 @@ class MainActivityAdapter constructor(
 ) : ListAdapter<Friend, RecyclerView.ViewHolder>(diffUtils) {
 
     interface ItemCallBack {
-        fun onItemClicked(friend: Friend, position: Int)
+        fun onItemClicked(friend: Friend, position: Int, adapter: MainActivityAdapter)
     }
 
     var itemCallBack = callback
@@ -30,7 +30,6 @@ class MainActivityAdapter constructor(
             }
 
             override fun areContentsTheSame(oldItem: Friend, newItem: Friend): Boolean {
-                Log.d(TAG, "normal - oldItem : ${oldItem.hashCode()} newItem : ${newItem.hashCode()}")
                 return oldItem.selected == newItem.selected
             }
         }
@@ -47,34 +46,46 @@ class MainActivityAdapter constructor(
 
     inner class ItemViewHolder(val binding: ItemViewBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(friend: Friend, position: Int) {
-            if (friend.selected == 0) {
-                Log.d(TAG,"01 - bind() called")
-                binding.ivInviteRoomRadioButtonFill.visibility = View.GONE
-                binding.ivInviteRoomRadioButton.visibility = View.VISIBLE
-            } else {
-                Log.d(TAG,"02 - bind() called")
-                binding.ivInviteRoomRadioButtonFill.visibility = View.VISIBLE
-                binding.ivInviteRoomRadioButton.visibility = View.GONE
-            }
-
+            binding.ivInviteRoomRadioButton.isActivated = friend.selected != "0"
             binding.itemChatRoomList.setOnClickListener(
-                ItemClickListener(friend, position)
+                ItemClickListener(friend, position, binding)
             )
             binding.tvChatRoomListUserName.text = friend.nickname
         }
     }
     inner class ItemClickListener(
         var friend: Friend,
-        var position: Int
+        var position: Int,
+        var binding: ItemViewBinding
     ) : View.OnClickListener {
         override fun onClick(view: View?) {
             when (view?.id) {
                 R.id.item_chat_room_list ->
                     {
-                        Log.d(TAG, "ItemClickListener - onClick() called")
-                        itemCallBack?.onItemClicked(friend, position)
+                        if (binding.ivInviteRoomRadioButton.isActivated) {
+                            Log.d(MainActivityMarkAdapter.TAG, "binding.ivInviteRoomRadioButton.isSelected - ${binding.ivInviteRoomRadioButton.isSelected} called")
+                            binding.ivInviteRoomRadioButton.isActivated = false
+                        } else {
+                            binding.ivInviteRoomRadioButton.isActivated = true
+                        }
+
+                        itemCallBack?.onItemClicked(friend, position, this@MainActivityAdapter)
                     }
             }
         }
+    }
+    fun putActivate(position: Int) {
+        var list: MutableList<Friend> = currentList.toMutableList()
+        var friend: Friend = currentList[position].copy()
+        friend.selected = "1"
+        list[position] = friend
+        submitList(list)
+    }
+    fun removeActivate(position: Int) {
+        var list: MutableList<Friend> = currentList.toMutableList()
+        var friend: Friend = currentList[position].copy()
+        friend.selected = "0"
+        list[position] = friend
+        submitList(list)
     }
 }

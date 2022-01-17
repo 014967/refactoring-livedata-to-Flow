@@ -56,7 +56,7 @@ dependencies {
 
 
     // ktx - lifecycle
-    def ver_lifecycle = "2.3.1"
+    def ver_lifecycle = "2.4.0-alpha01"
     implementation "androidx.fragment:fragment-ktx:1.4.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$ver_lifecycle"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$ver_lifecycle"
